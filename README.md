@@ -735,5 +735,193 @@ invite( new ArrayList<String>() {{ add("czf"); add("ayano"); }}  )
 		所以，在实现内部类的时候，若不会使用到外围类的数据，那么应将其设为静态内部类。
 
 ---
-#	本篇完
- 遗留知识点： 反射，代理。
+# 第六章
+
+- ### 泛型类的定义:
+
+```java
+// 以pair为例
+public class Pair<A, B> {
+    private A first;
+    private B second;
+
+    public Pair() {
+        first = null;
+        second = null;
+    }
+
+    public Pair(A first, B second) {
+        this.first = first;
+        this.second = second;
+    }
+
+    public void setFirst(A first) { this.first = first;}
+    public void setSecond(B second) { this.second = second;}
+    public A getFirst() { return first; }
+    public B getSecond() { return second;}
+}
+```
+
+利用泛型来自定对数组排序:
+
+```java
+class Main {
+    public static void main(String[] args) {
+        ArrayList<Pair<Integer, Integer>> arr = new ArrayList<>();
+        ...// 填充arr
+        Comparator cmp = new Cmp();
+        Collections.sort(arr, cmp);
+        ...
+    }
+
+    // 静态方法里只能调用静态
+    static class Cmp implements Comparator<Pair<Integer, Integer>>{
+        public int compare( Pair<Integer,Integer> a, Pair<Integer,Integer> b ){
+            if ( a.getFirst()!=b.getFirst() )
+                return a.getFirst()-b.getFirst();
+            return a.getSecond() - b.getSecond();
+        }
+    }
+}
+```
+
+- ### 泛型函数
+```java
+public class Main8_3 {
+    public static void main(String[] args) {
+        String [] S = { "gm","czfg","lm" };
+        System.out.println(ArrayAlg.<String>getMiddle(S));
+        // 也可以省略不写<String>，编译器会自动推断出来，下面的也是对的
+        System.out.println(ArrayAlg.getMiddle(S));
+        // 但如果推断不出来就会报错.
+    }
+}
+
+class ArrayAlg{
+    public static <T> T getMiddle( T [] S ){
+        return S[S.length/2];
+    }
+}
+```
+
+- ### 泛型代码和虚拟机
+#### 1. 类型擦除
+上面的Pair<T>那个类，被翻译之后会变成
+```java
+public class Pair{
+    private Object first;
+    private Object second;
+    ....
+}
+```
+即用Object代替<T>.
+在泛型类被类型擦除的时候，之前泛型类中的类型参数部分如果没有指定上限，如 <T>则会被转译成普通的 Object 类型，如果指定了上限如 <T extends String>则类型参数就被替换成类型上限
+
+
+#### 2. 翻译泛型表达式
+就是把Object进行强制类型转换成T.
+
+#### 3. 翻译泛型方法
+    ( 这部分有点难，我也不确定自己理解的对不对 )
+    在翻译泛型方法的时候， 类型擦除和多态 可能会出现一些冲突，看下面的这个例子:
+```java
+class DateInterval extends Pair<LocalDate>{
+    public void setSecond( LocalDate second ){
+        ...
+    }
+}
+```
+上面的代码在进行类型擦除后就变成了
+```java 
+class DateInterval extends Pair{
+    public void setSecond( LocalDate second ){  // ---（*）-----重写的
+        ...
+    }
+}
+```
+
+这里解释一下，为什么类型擦除之后，LocalDate没有变成Object.
+因为 上面的setSecond(LocalDate second)根本不是多态中的继承，而是重写！
+因为泛型是由编译器实现的，到了虚拟机的层面上，Pair<LocalDate>实际上就是 Pair，LocalDate变成了Object，
+因此，DateInterval继承的 就是 “LocalDate变成了Object的Pair” 而不是Pair<LocalDate>
+
+为了方便说明，令 Pair<Object> == “LocalDate变成了Object的Pair”
+
+Pair<Object>里的 setSecond( Object second ) 被DateInterval继承了， 然后DateInterval又重写了
+一个 setSecond( LocalDate second ) ，因此，此时的 DateInterval 中，有两个setSecond：
+
+setSecond( Object second ) : 从Pair<Object>继承来的
+setSecond( second ) :    DateInterval里重写的那个 ( (*)行 )
+
+
+但是，这里出现的问题就是，当满足调用setSecond( LocalDate second )的时候，那么也一定可
+以调用setSecond(Object second)， 所以这个时候，就不知道该调用哪一个了。
+
+
+虚拟机解决这个问题的方法就是，编译器通过在DateInterval类中生成一个"桥方法（bridge method）"来解决:
+
+```java 
+public void setSecond(Object second){ 
+    setSecond( (Date)second );
+}
+```
+( ps: 桥方法就是用来解决 “某个特定类型和继承的Object类型有了冲突的时候” 的问题， 在clone那一块的时候也是这样 )
+
+小结: 
+    1. 虚拟机中没有泛型，泛型是编译器根据普通的类和方法实现的 
+    2. 桥方法用来保持多态的正确性
+
+本节参考: https://blog.csdn.net/lonelyroamer/article/details/7868820
+
+
+- ### 泛型约束和局限性
+#### 1. 不能用基本类型实例化泛型.
+    例如: 泛型的<>里面不能用int, 而应该用Integer. 因为在类型擦除的时候，需要替换成Object， 所以不可以用int, double这样的.
+#### 2. 运行时的类型检查( instanceof , getClass.. ) 只适用于原始类型
+举个例子
+```java
+if ( a instanceof Pair<String> ) // Error 
+if ( a instanceof Pair<T> ) // Error
+if ( a instanceof Pair ) // OK
+if ( a instanceof Pair<?> ) // OK  符号?是通配符，这个后面讲
+```
+
+getClass也是类似
+
+```java
+Pair<String> a = ..;
+Pair<Integer> b = ..;
+a.getClass() == b.getClass() ; // 这个等式返回True， 等式两边都返回Pair.class
+```
+
+#### 3. 不能创建泛型类型的数组
+例如:
+```java
+Pair<String> [] table = new Pair<String>[10]; //Error
+```
+可以用ArrayList来代替:
+```java
+ArrayList<Pair<String>> table = new ArrayList<>();
+```
+#### 4. 不能实例化类型变量(就是<T>中的T)
+```java
+//对于<T>
+new T(); //error
+```
+具体解决方法要用反射机制来做，之后再补上吧.
+
+#### 5. 对于<T>中的T ,  T [] mm = new T[2]; 是非法的
+理由同上
+
+
+#### 6. 在泛型类的静态上下文中类型变量无效
+```java
+public class S<T>{
+    private static T a; //Error
+    public static T func(){ // Error
+    
+    }
+}
+```
+
+#### 7. 342/728 明天在继续写
