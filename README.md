@@ -1122,3 +1122,19 @@ Object newFruit2=p.get();
 
 频繁往外读取内容的，适合用上界Extends。
 经常往里插入的，适合用下界Super。
+
+#### 6. 通配符捕获
+通配符是可以用泛型的<T>来进行捕获的，下面来看个例子, 交换两个人的顺序
+```java
+    public static void swapHelper( Pair<T> p ){
+        T t = p.getFirst();
+        p.setFirst( p.getSecond() );
+        p.setSecond(t);
+    }
+
+    public static void swap( Pair<? extend Person> person ){
+        // ? p = person.getFirst(); 这显然是错的，因为？不是基本类型
+        swapHelper( person );
+    }
+
+```
