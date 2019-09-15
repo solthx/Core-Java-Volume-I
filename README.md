@@ -977,7 +977,7 @@ List<Student> student = new ArrayList<Person>();
 ```
 
 ### 通配符类型
-[!pic]
+![pic](https://github.com/solthx/Core-Java-Volume-I/blob/master/picture/generics/java%E6%B3%9B%E5%9E%8B.png)
 <? extends T>和<? super T>是Java泛型中的“通配符（Wildcards）”和“边界（Bounds）”的概念。
 
     <? extends T>：是指 “上界通配符（Upper Bounds Wildcards）”
