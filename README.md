@@ -529,7 +529,7 @@ public class test{
 
 - ### 内部类
  
- 1.  <font color=blue size=4>内部类可以访问外围类对象（在类A中又写了一个内部类B，那么A就是B的外围类），有一个名为outer的引用（即在自动生成的构造器代码中，会有一个``outer=外围类;``的语句），outer并不是Java的关键字。
+ 1.  <font color=blue size=4>内部类可以访问外围类对象（在类A中又写了一个内部类B，那么A就是B的外围类），有一个名为outer的引用（即在自动生成的构造器代码中，会有一个``outer=外围类;``的语句），outer并不是Java的关键字。</font>
 ```java
 public class TimePrinter implements ActionListener{
 	//=======自动生成的代码========
@@ -594,9 +594,9 @@ public class TalkingClock$TimePrinter implements java.awt.event.ActionListener {
  ```
 这里多出来个 **静态方法** access$000，返回的还是**boolean**类型，**和beep一样**， 这下就豁然开朗了！
 
-<font color=DBLUE size=4>这根本不是什么新东西，之所以内部类可以访问外围类，是因为编译器通过自动生成一个静态方法( 这里是access$000 )，专门用来返回那些被内部类访问的外围类的变量（这里是beep变量）！！！！
+<font color=DBLUE size=4>这根本不是什么新东西，之所以内部类可以访问外围类，是因为编译器通过自动生成一个静态方法( 这里是access$000 )，专门用来返回那些被内部类访问的外围类的变量（这里是beep变量）！！！！</font>
 
-因此，当编译器一顿操作之后，在虚拟机眼里
+因此，当编译器一顿操作之后，在虚拟机眼里 
 ```
 if (beep)
 ```
@@ -735,7 +735,7 @@ invite( new ArrayList<String>() {{ add("czf"); add("ayano"); }}  )
 		所以，在实现内部类的时候，若不会使用到外围类的数据，那么应将其设为静态内部类。
 
 ---
-# 第六章
+# 第七章 泛型
 
 - ### 泛型类的定义:
 
@@ -978,10 +978,13 @@ List<Student> student = new ArrayList<Person>();
 
 ### 通配符类型
 ![pic](https://github.com/solthx/Core-Java-Volume-I/blob/master/picture/generics/java%E6%B3%9B%E5%9E%8B.png)
-<? extends T>和<? super T>是Java泛型中的“通配符（Wildcards）”和“边界（Bounds）”的概念。
+
+```<? extends T>```和```<? super T>```是Java泛型中的“通配符（Wildcards）”和“边界（Bounds）”的概念。
 
     <? extends T>：是指 “上界通配符（Upper Bounds Wildcards）”
     <? super T>：是指 “下界通配符（Lower Bounds Wildcards）”
+
+
 #### 1. 为什么要用通配符和边界？
 使用泛型的过程中，经常出现一种很别扭的情况。比如按照题主的例子，我们有Fruit类，和它的派生类Apple类。
 ```java
@@ -1044,7 +1047,7 @@ class RedApple extends Apple{}
 class GreenApple extends Apple{}
 ```
 在这个体系中，下界通配符 Plate<？ extends Fruit> 覆盖下图中蓝色的区域。
-
+![pic](https://github.com/solthx/Core-Java-Volume-I/blob/master/picture/generics/lowerBounds.png)
 
 
 #### 3. 什么是下界？
@@ -1054,6 +1057,7 @@ class GreenApple extends Apple{}
 Plate<？ super Fruit>
 ```
 表达的就是相反的概念：一个能放水果以及一切是水果基类的盘子。``Plate<？ super Fruit>``是``Plate<Fruit>``的基类，但不是``Plate<Apple>``的基类。对应刚才那个例子，``Plate<？ super Fruit>``覆盖下图中红色的区域。
+![pic](https://github.com/solthx/Core-Java-Volume-I/blob/master/picture/generics/upperBounds.png)
 
 
 
