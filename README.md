@@ -302,7 +302,7 @@ class Employee{
     1. int intValue() : 返回Integer中的值
     2. static String toString() 
     3. static Integer valueOf(String s) : 字符串变Integer对象
-   
+
 ---	
 # 第六章 接口、lambda表达式和内部类
 - ### 接口 
@@ -1137,4 +1137,97 @@ Object newFruit2=p.get();
         swapHelper( person );
     }
 
+```
+
+
+### 第五章补充 反射
+#### 1. 反射简介
+    Java 反射机制在程序运行时，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意一个方法和属性。这种 动态的获取信息 以及 动态调用对象的方法 的功能称为 java 的反射机制。反射机制很重要的一点就是“运行时”，其使得我们可以在程序运行时加载、探索以及使用编译期间完全未知的 .class 文件。换句话说，Java 程序可以加载一个运行时才得知名称的 .class 文件，然后获悉其完整构造，并生成其对象实体、或对其 fields（变量）设值、或调用其 methods（方法）
+
+#### 2. 根据类名来创建对象
+```java
+static Class forName( String 类名 ); //Class.forName(..)返回一个Class类
+Object newInstance(); // 返回这个类的一个新实例
+// 举例
+String s = "java.util.Random";
+Object m = Class.forName(s).newInstance();  // newInstance返回一个Objtect类型， 尽管m实际上是一个String的类，但需要进行强制类型转换
+```
+
+newInstance和new的区别:
+    newInstance: 弱类型,低效率,只能调用无参构造。 
+    new: 强类型.相对高效,能调用任何public构造。
+    
+newInstance：类加载机制:
+```java
+    Class c = Class.forName(“A”);
+    factory = (AInterface)c.newInstance(); 
+    String className = "A";
+    Class c = Class.forName(className);
+    factory = (AInterface)c.newInstance(); 
+　　 String className = readfromXMlConfig;//从xml 配置文件中获得字符串
+    Class c = Class.forName(className);
+    factory = (AInterface)c.newInstance(); 
+```
+　　 优点：从以上例子中看出，无论A类怎么变化，上述代码不变，甚至可以更换A的兄弟类B , C , D….等，只要他们继承Ainterface就可以。
+
+    newInstance就是把new这个方式分解为两步,
+    1. 首先调用class的加载方法加载某个类
+    2. 然后实例化
+    这样分步的好处是显而易见的。我们可以在调用class的静态加载方法forName时获得更好的灵活性，提供给了我们降耦的手段。
+
+#### 2. 本次说明的测试类:
+一、FatherClass:
+```java
+public class FatherClass{
+    public String fatherName;
+    public int fatherAge;
+    public void printFatherMsg(){}
+}
+```
+二、SonClass:
+```java
+public class SonClass extends FatherClass {
+    private String sonName;
+    protected int sonAge;
+    public String sonBirthday;
+
+    public void printSonMsg() {
+        System.out.println("Son Msg - name: " + sonName + "; age : " + sonAge);
+    }
+
+    private void setSonName(String name) {sonName = name;}
+
+    private void setSonAge(int age) {sonAge = age;}
+
+    private int getSonAge() {return sonAge;}
+
+    private String getSonName() {return sonName;}
+}
+```
+
+#### 3. 利用反射来获取类的成员变量
+```java
+// 通过反射来获得public的所有变量
+// 0表示只打印 当前类拥有的以及从父类继承的所有public的成员变量
+// 其他数表示打印全部只有当前类拥有的私有成员变量
+private static void printFields(int kind) {
+    // 获取并打印目标类
+    Class mClass = SonClass.class;
+    System.out.println("类的名称: " + mClass.getName());
+
+    Field[] fields;
+    // getFields() 返回当前类拥有的以及从父类继承的所有public的成员变量的数组
+    // getDeclaredFields() 返回只有当前类拥有的私有成员变量的数组
+    // getField( para_name ) 返回变量名为para_name的变量 若不存在 则返回null , param是String类型
+    if (kind == 0)
+        fields = mClass.getFields();
+    else
+        fields = mClass.getDeclaredFields();
+    for (Field field : fields) {
+        // getModifiers() 获取访问域的编码， Modifier.toString可以解码
+        int modifier = field.getModifiers();
+        // 按照格式: "访问域 变量类型 变量名" 打印
+        System.out.println(Modifier.toString(modifier) + " " + field.getType().getName() + " " + field.getName()); // 打印访问域
+    }
+}
 ```
