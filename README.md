@@ -1123,6 +1123,10 @@ Object newFruit2=p.get();
 频繁往外读取内容的，适合用上界Extends。
 经常往里插入的，适合用下界Super。
 
+#### 5.5 < T extends Comparamble<? super T>> 的好处: https://blog.csdn.net/frankarmstrong/article/details/56013107
+ < T extends Comparamble<? super T>> 的好处，简单来说就是，对类A和其父类能够"一视同仁". 
+
+
 #### 6. 通配符捕获
 通配符是可以用泛型的<T>来进行捕获的，下面来看个例子, 交换两个人的顺序
 ```java
@@ -1140,7 +1144,7 @@ Object newFruit2=p.get();
 ```
 
 
-### 第五章补充 反射
+### 反射
 #### 1. 反射简介
     Java 反射机制在程序运行时，对于任意一个类，都能够知道这个类的所有属性和方法；对于任意一个对象，都能够调用它的任意一个方法和属性。这种 动态的获取信息 以及 动态调用对象的方法 的功能称为 java 的反射机制。反射机制很重要的一点就是“运行时”，其使得我们可以在程序运行时加载、探索以及使用编译期间完全未知的 .class 文件。换句话说，Java 程序可以加载一个运行时才得知名称的 .class 文件，然后获悉其完整构造，并生成其对象实体、或对其 fields（变量）设值、或调用其 methods（方法）
 
@@ -1207,7 +1211,6 @@ public class SonClass extends FatherClass {
 
 #### 3. 利用反射来获取类的成员变量
 ```java
-// 通过反射来获得public的所有变量
 // 0表示只打印 当前类拥有的以及从父类继承的所有public的成员变量
 // 其他数表示打印全部只有当前类拥有的私有成员变量
 private static void printFields(int kind) {
@@ -1231,3 +1234,75 @@ private static void printFields(int kind) {
     }
 }
 ```
+
+#### 4. 利用反射来获取类的成员函数
+```java
+// 0表示只打印 当前类拥有的以及从父类继承的所有public的成员函数
+// 其他数表示打印全部只有当前类拥有的私有成员函数
+private static void printMethods(int kind) {
+    Class mClass = SonClass.class;
+    System.out.println("类的名称: " + mClass.getName());
+    Method[] methods;
+
+    // getMethods() 返回当前类拥有的以及从父类继承的所有public的成员变量的数组
+    // getDeclaredMethods 返回只有当前类拥有的私有成员变量的数组
+    // getDeclaredMethod( func_name, arg0.class, arg1.class, ... ) func_name为函数名，
+    // arg为形参类型的 若不存在 则返回null , param是String类型
+    if (kind == 0)
+        methods = mClass.getMethods();
+    else
+        methods = mClass.getDeclaredMethods();
+
+    for (Method method : methods) {
+        // getModifiers() 获取访问域的编码， Modifier.toString可以解码
+        int modifier = method.getModifiers();
+        String paramList = ""; // 参数列表
+        for (Parameter param : method.getParameters())
+            paramList += (param.getType().getName() + " " + param.getName() + ", ");
+
+        // 按照格式 "访问域 返回值类型 函数名( 形参列表 )" 输出
+        System.out.println(Modifier.toString(modifier) + " " + method.getReturnType().getName() + " "
+                + method.getName() + "(" + paramList + ")");
+    }
+}
+```
+
+
+
+#### 5. 利用反射来调用私有成员函数
+```java
+// 通过反射访问私有成员
+private static void getPrivateMethod() throws Exception {
+    TestClass testclass = new TestClass();
+    Class mClass = testclass.getClass();
+    // getDeclaredMethod( func_name, arg0.class, arg1.class, ... ) 返回名为"func_name"的Method
+    Method privateMethod = mClass.getDeclaredMethod("privateMethod", String.class, int.class);
+    if (privateMethod != null) {
+        // 权限置成true
+        privateMethod.setAccessible(true);
+        // 调用
+        privateMethod.invoke(testclass, "Java Reflect", 717);
+    }
+}
+```
+
+#### 6. 利用反射来修改私有成员变量
+```java
+// 通过反射修改私有变量
+private static void modifyPrivateField() throws Exception {
+    TestClass testclass = new TestClass();
+    Class mClass = testclass.getClass();
+    Field field = mClass.getDeclaredField("MSG");
+     // getField( para_name ) 返回变量名为para_name的变量 若不存在 则返回null , param是String类型
+    if (field != null) {
+        field.setAccessible(true);
+        System.out.println(testclass.getMsg());
+        // 赋值变量
+        field.set(testclass, "Modify");
+        System.out.println(testclass.getMsg());
+    }
+}
+```
+
+--- 
+### 第八章 集合
